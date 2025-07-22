@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Solution Partners - Vercel (Video Integrated)</title>
+    <title>Solution Partners - Vercel (Video Fixed)</title>
     <style>
         :root {
             --background-color: #000;
@@ -39,10 +39,10 @@
         
         .hero { text-align: center; padding: 6rem 1rem; }
         .hero-title-container {
-            font-size: clamp(2rem, 5vw, 3.5rem); /* Responsive font size */
+            font-size: clamp(2rem, 5vw, 3.5rem);
             font-weight: bold;
             margin: 0 0 1rem;
-            min-height: 100px;
+            min-height: 100px; /* Prevents layout shift */
         }
         .hero-title-container .blur-text-word {
             display: inline-block;
@@ -74,8 +74,8 @@
             background-color: var(--card-color);
             border: 1px solid var(--border-color);
             border-radius: 8px;
-            transition: border-color 0.3s ease, opacity 0.8s ease, transform 0.8s cubic-bezier(0.25, 1, 0.5, 1);
             overflow: hidden;
+            transition: border-color 0.3s ease, opacity 0.8s ease, transform 0.8s cubic-bezier(0.25, 1, 0.5, 1);
         }
         
         .partner-card {
@@ -88,10 +88,17 @@
         .partner-card.visible { opacity: 1; transform: translateY(0) rotateX(0deg); }
         .partner-card:hover { border-color: #555; }
         
+        /* --- CSS FIXES APPLIED HERE --- */
         .video-card {
+            /* This is the key: Make the card span all columns */
+            grid-column: 1 / -1; 
+            
             position: relative;
             padding-bottom: 56.25%; /* 16:9 Aspect Ratio */
             height: 0;
+            
+            /* Add a pointer cursor to indicate it's interactive */
+            cursor: pointer; 
         }
         .video-card iframe {
             position: absolute; top: 0; left: 0; width: 100%; height: 100%; border: 0;
@@ -100,6 +107,7 @@
             position: absolute; bottom: 0; left: 0; right: 0; padding: 1rem 1.5rem;
             background: linear-gradient(to top, rgba(0,0,0,0.8), transparent);
             font-weight: bold; font-size: 1.1rem;
+            pointer-events: none; /* Allows clicks to go "through" to the video */
         }
 
         .partner-header { display: flex; align-items: center; margin-bottom: 1rem; }
@@ -108,7 +116,6 @@
         .partner-name h3 { margin: 0; font-size: 1.2rem; }
         .partner-tier { color: var(--text-muted); font-size: 0.9rem; font-weight: bold; }
         .partner-description { color: var(--text-secondary); flex-grow: 1; }
-
     </style>
 </head>
 <body>
@@ -125,20 +132,14 @@
             { id: 7, name: 'Orium', tier: 'Platinum', description: 'A composable commerce specialist and system integrator, helping ambitious commerce brands execute at the highest level.'},
         ];
 
-        // --- STATE & CORE FUNCTIONS ---
         const state = { activeFilter: 'All' };
         function setState(newState) { Object.assign(state, newState); App(); }
 
-        // --- FULLY DEFINED HELPER FUNCTIONS ---
         function renderBlurText(containerSelector, text, delay) {
             const container = document.querySelector(containerSelector);
             if (!container) return;
-            container.innerHTML = text
-                .split(" ")
-                .map(word => `<span class="blur-text-word">${word}</span>`)
-                .join(" ");
-            const words = container.querySelectorAll('.blur-text-word');
-            words.forEach((word, i) => {
+            container.innerHTML = text.split(" ").map(word => `<span class="blur-text-word">${word}</span>`).join(" ");
+            container.querySelectorAll('.blur-text-word').forEach((word, i) => {
                 setTimeout(() => { word.classList.add('visible'); }, i * delay);
             });
         }
@@ -161,13 +162,11 @@
             const buttons = document.querySelectorAll('.filter-btn');
             buttons.forEach(button => {
                 button.addEventListener('click', () => {
-                    const filter = button.getAttribute('data-filter');
-                    setState({ activeFilter: filter });
+                    setState({ activeFilter: button.getAttribute('data-filter') });
                 });
             });
         }
 
-        // --- MAIN APP RENDER FUNCTION ---
         function App() {
             const root = document.getElementById('root');
             if (!root) { console.error("Root element not found!"); return; }
@@ -193,8 +192,8 @@
                     <section class="partners-grid">
                         <div class="video-card">
                             <iframe 
-                                src="https://www.youtube.com/embed/1bsyR7_G3y0?autoplay=1&mute=1&loop=1&controls=0&showinfo=0&modestbranding=1&playlist=1bsyR7_G3y0"
-                                title="Inspiration Video" 
+                                src="https://www.youtube.com/embed/s5aeeI6S_3E?autoplay=1&mute=1&loop=1&controls=0&showinfo=0&modestbranding=1&playlist=s5aeeI6S_3E"
+                                title="Inspiration Video: Wallace Collection - Daydream" 
                                 frameborder="0" 
                                 allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
                                 allowfullscreen>
@@ -218,13 +217,11 @@
                 </main>
             `;
             
-            // Re-initialize all interactive components after rendering
             renderBlurText('#hero-title', "Find a Solution Partner", 120);
             setupScrollReveal('.partner-card');
             setupFilterListeners();
         }
 
-        // --- INITIAL RENDER ---
         document.addEventListener('DOMContentLoaded', App);
     </script>
 </body>
