@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Solution Partners - Vercel (Video Integrated)</title>
+    <style>
+        :root {
+            --background-color: #000;
+            --card-color: #111;
+            --border-color: #333;
+            --text-primary: #fff;
+            --text-secondary: #ccc;
+            --text-muted: #888;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            margin: 0;
+            background-color: var(--background-color);
+            color: var(--text-primary);
+        }
+        
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem 2rem;
+            border-bottom: 1px solid var(--border-color);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            background-color: rgba(0,0,0,0.8);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+        }
+
+        .logo { font-weight: bold; font-size: 1.2rem; }
+        
+        .hero { text-align: center; padding: 6rem 1rem; }
+        .hero-title-container {
+            font-size: clamp(2rem, 5vw, 3.5rem); /* Responsive font size */
+            font-weight: bold;
+            margin: 0 0 1rem;
+            min-height: 100px;
+        }
+        .hero-title-container .blur-text-word {
+            display: inline-block;
+            opacity: 0;
+            filter: blur(8px);
+            transform: translateY(20px);
+            transition: opacity 0.6s ease-out, filter 0.6s ease-out, transform 0.6s ease-out;
+        }
+        .hero-title-container .blur-text-word.visible {
+            opacity: 1;
+            filter: blur(0);
+            transform: translateY(0);
+        }
+        .hero p { font-size: 1.2rem; color: var(--text-muted); max-width: 600px; margin: 0 auto; }
+
+        .partner-filters { display: flex; justify-content: center; margin: 2rem 0; flex-wrap: wrap; gap: 1rem; }
+        .filter-btn { background-color: var(--card-color); border: 1px solid var(--border-color); color: var(--text-secondary); padding: 0.75rem 1.5rem; border-radius: 5px; cursor: pointer; transition: all 0.2s ease-in-out; }
+        .filter-btn:hover { background-color: var(--border-color); }
+        .filter-btn.active { border-color: var(--text-primary); color: var(--text-primary); }
+
+        .partners-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+            gap: 1.5rem;
+            margin-top: 2rem;
+        }
+        
+        .partner-card, .video-card {
+            background-color: var(--card-color);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            transition: border-color 0.3s ease, opacity 0.8s ease, transform 0.8s cubic-bezier(0.25, 1, 0.5, 1);
+            overflow: hidden;
+        }
+        
+        .partner-card {
+            opacity: 0;
+            transform: translateY(30px) rotateX(-5deg);
+            padding: 1.5rem;
+            display: flex;
+            flex-direction: column;
+        }
+        .partner-card.visible { opacity: 1; transform: translateY(0) rotateX(0deg); }
+        .partner-card:hover { border-color: #555; }
+        
+        .video-card {
+            position: relative;
+            padding-bottom: 56.25%; /* 16:9 Aspect Ratio */
+            height: 0;
+        }
+        .video-card iframe {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%; border: 0;
+        }
+        .video-card .title-overlay {
+            position: absolute; bottom: 0; left: 0; right: 0; padding: 1rem 1.5rem;
+            background: linear-gradient(to top, rgba(0,0,0,0.8), transparent);
+            font-weight: bold; font-size: 1.1rem;
+        }
+
+        .partner-header { display: flex; align-items: center; margin-bottom: 1rem; }
+        .partner-logo { width: 50px; height: 50px; background-color: #333; border-radius: 50%; margin-right: 1rem; }
+        .partner-name { flex-grow: 1; }
+        .partner-name h3 { margin: 0; font-size: 1.2rem; }
+        .partner-tier { color: var(--text-muted); font-size: 0.9rem; font-weight: bold; }
+        .partner-description { color: var(--text-secondary); flex-grow: 1; }
+
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+
+    <script>
+        // --- DATA SOURCE ---
+        const partnersData = [
+            { id: 1, name: 'AKQA', tier: 'Platinum', description: 'A design and innovation agency that creates soulful, intelligent digital products and services.'},
+            { id: 2, name: 'Horizontal', tier: 'Platinum', description: 'A global digital consultancy that helps businesses to design, build, and market their digital experiences.'},
+            { id: 3, name: 'Perficient', tier: 'Platinum', description: 'A leading digital consultancy that helps brands connect with customers and grow their business.'},
+            { id: 4, name: 'Code and Theory', tier: 'Gold', description: 'A digital-first creative agency that helps clients innovate in a digital-centric world.'},
+            { id: 5, name: 'Huge Inc.', tier: 'Gold', description: 'A global experience agency providing digital transformation and marketing for the world’s most ambitious brands.'},
+            { id: 7, name: 'Orium', tier: 'Platinum', description: 'A composable commerce specialist and system integrator, helping ambitious commerce brands execute at the highest level.'},
+        ];
+
+        // --- STATE & CORE FUNCTIONS ---
+        const state = { activeFilter: 'All' };
+        function setState(newState) { Object.assign(state, newState); App(); }
+
+        // --- FULLY DEFINED HELPER FUNCTIONS ---
+        function renderBlurText(containerSelector, text, delay) {
+            const container = document.querySelector(containerSelector);
+            if (!container) return;
+            container.innerHTML = text
+                .split(" ")
+                .map(word => `<span class="blur-text-word">${word}</span>`)
+                .join(" ");
+            const words = container.querySelectorAll('.blur-text-word');
+            words.forEach((word, i) => {
+                setTimeout(() => { word.classList.add('visible'); }, i * delay);
+            });
+        }
+        
+        function setupScrollReveal(selector) {
+            const elements = document.querySelectorAll(selector);
+            if (!elements.length) return;
+            const observer = new IntersectionObserver((entries, observer) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        entry.target.classList.add('visible');
+                        observer.unobserve(entry.target);
+                    }
+                });
+            }, { threshold: 0.15 });
+            elements.forEach(el => observer.observe(el));
+        }
+
+        function setupFilterListeners() {
+            const buttons = document.querySelectorAll('.filter-btn');
+            buttons.forEach(button => {
+                button.addEventListener('click', () => {
+                    const filter = button.getAttribute('data-filter');
+                    setState({ activeFilter: filter });
+                });
+            });
+        }
+
+        // --- MAIN APP RENDER FUNCTION ---
+        function App() {
+            const root = document.getElementById('root');
+            if (!root) { console.error("Root element not found!"); return; }
+
+            const filteredPartners = partnersData.filter(p =>
+                state.activeFilter === 'All' || p.tier === state.activeFilter
+            );
+
+            root.innerHTML = `
+                <header class="header"><div class="logo">Vercel</div></header>
+                <main class="main">
+                    <section class="hero">
+                        <div id="hero-title" class="hero-title-container"></div>
+                        <p>Connect with our certified agency partners to build, optimize, and scale your next web project.</p>
+                    </section>
+
+                    <div class="partner-filters">
+                        <button class="filter-btn ${state.activeFilter === 'All' ? 'active' : ''}" data-filter="All">All</button>
+                        <button class="filter-btn ${state.activeFilter === 'Platinum' ? 'active' : ''}" data-filter="Platinum">Platinum</button>
+                        <button class="filter-btn ${state.activeFilter === 'Gold' ? 'active' : ''}" data-filter="Gold">Gold</button>
+                    </div>
+
+                    <section class="partners-grid">
+                        <div class="video-card">
+                            <iframe 
+                                src="https://www.youtube.com/embed/1bsyR7_G3y0?autoplay=1&mute=1&loop=1&controls=0&showinfo=0&modestbranding=1&playlist=1bsyR7_G3y0"
+                                title="Inspiration Video" 
+                                frameborder="0" 
+                                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
+                                allowfullscreen>
+                            </iframe>
+                            <div class="title-overlay">Inspiration: The Dream Build</div>
+                        </div>
+
+                        ${filteredPartners.map(partner => `
+                            <div class="partner-card">
+                                <div class="partner-header">
+                                    <div class="partner-logo"></div>
+                                    <div class="partner-name">
+                                        <h3>${partner.name}</h3>
+                                        <p class="partner-tier">${partner.tier} Partner</p>
+                                    </div>
+                                </div>
+                                <p class="partner-description">${partner.description}</p>
+                            </div>
+                        `).join('')}
+                    </section>
+                </main>
+            `;
+            
+            // Re-initialize all interactive components after rendering
+            renderBlurText('#hero-title', "Find a Solution Partner", 120);
+            setupScrollReveal('.partner-card');
+            setupFilterListeners();
+        }
+
+        // --- INITIAL RENDER ---
+        document.addEventListener('DOMContentLoaded', App);
+    </script>
+</body>
+</html>
